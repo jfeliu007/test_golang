@@ -14,10 +14,11 @@ type Shape interface {
 
 // Base struct for composition
 type Entity struct {
-	ID   int
-	Name string
-	x    float64 // private field
-	y    float64 // private field
+	ID      int
+	Name    string
+	Version int     // NEW public field
+	x       float64 // private field
+	y       float64 // private field
 }
 
 // Public method
@@ -29,6 +30,11 @@ func (e *Entity) GetPosition() (float64, float64) {
 func (e *Entity) SetPosition(x, y float64) {
 	e.x = x
 	e.y = y
+}
+
+// NEW: Public method
+func (e *Entity) GetVersion() int {
+	return e.Version
 }
 
 // private method
@@ -59,8 +65,8 @@ func (c *Circle) String() string {
 	return fmt.Sprintf("Circle(Name: %s, Radius: %.2f)", c.Name, c.Radius)
 }
 
-// private method
-func (c *Circle) scale(factor float64) {
+// NEW: Public method (was private)
+func (c *Circle) Scale(factor float64) {
 	c.Radius *= factor
 }
 
@@ -89,6 +95,11 @@ func (r *Rectangle) String() string {
 // Public method
 func (r *Rectangle) IsSquare() bool {
 	return r.Width == r.Height
+}
+
+// NEW: Public method
+func (r *Rectangle) Diagonal() float64 {
+	return r.diagonal()
 }
 
 // private method
@@ -128,11 +139,16 @@ func (t *Triangle) SetSides(s1, s2, s3 float64) {
 	t.side3 = s3
 }
 
-// private method
-func (t *Triangle) isValid() bool {
+// NEW: Public method (was private)
+func (t *Triangle) IsValid() bool {
 	return t.side1+t.side2 > t.side3 &&
 		t.side1+t.side3 > t.side2 &&
 		t.side2+t.side3 > t.side1
+}
+
+// private method
+func (t *Triangle) isValid() bool {
+	return t.IsValid()
 }
 
 // Point doesn't implement Shape interface
@@ -148,9 +164,11 @@ func (p *Point) Distance(other *Point) float64 {
 	return math.Sqrt(dx*dx + dy*dy)
 }
 
-// Public method
-func (p *Point) String() string {
-	return fmt.Sprintf("Point(%d, %d)", p.X, p.Y)
+// REMOVED: String() method
+
+// NEW: Public method (was private)
+func (p *Point) ManhattanDistance(other *Point) int {
+	return p.manhattanDistance(other)
 }
 
 // private method
@@ -160,8 +178,9 @@ func (p *Point) manhattanDistance(other *Point) int {
 
 // Container uses composition and doesn't implement Shape
 type Container struct {
-	Entity // composition
-	shapes []Shape
+	Entity   // composition
+	Capacity int // NEW public field
+	shapes   []Shape
 }
 
 // Public method
@@ -178,17 +197,16 @@ func (c *Container) TotalArea() float64 {
 	return total
 }
 
-// Public method
-func (c *Container) ListShapes() {
-	fmt.Println("Shapes in container:")
-	for i, s := range c.shapes {
-		fmt.Printf("%d. %s\n", i+1, s.String())
-	}
+// REMOVED: ListShapes() method
+
+// NEW: Public method (was private)
+func (c *Container) Count() int {
+	return len(c.shapes)
 }
 
 // private method
 func (c *Container) count() int {
-	return len(c.shapes)
+	return c.Count()
 }
 
 // Person doesn't use composition
@@ -216,14 +234,16 @@ func (p *Person) SetAge(age int) {
 	}
 }
 
-// Public method
-func (p *Person) String() string {
-	return fmt.Sprintf("Person(%s, Age: %d)", p.FullName(), p.age)
+// REMOVED: String() method
+
+// NEW: Public method (was private)
+func (p *Person) HasEmail() bool {
+	return p.email != ""
 }
 
 // private method
 func (p *Person) hasEmail() bool {
-	return p.email != ""
+	return p.HasEmail()
 }
 
 // Account uses composition with Person
@@ -250,6 +270,11 @@ func (a *Account) String() string {
 	return fmt.Sprintf("Account(%s, Num: %s, Balance: $%.2f)", a.FullName(), a.AccountNum, a.balance)
 }
 
+// NEW: Public method (was private)
+func (a *Account) CanWithdraw(amount float64) bool {
+	return a.canWithdraw(amount)
+}
+
 // private method
 func (a *Account) canWithdraw(amount float64) bool {
 	return amount > 0 && amount <= a.balance
@@ -267,20 +292,20 @@ func abs(x int) int {
 func main() {
 	// Create shapes
 	circle := &Circle{
-		Entity: Entity{ID: 1, Name: "Red Circle"},
+		Entity: Entity{ID: 1, Name: "Red Circle", Version: 1},
 		Radius: 5.0,
 	}
 	circle.SetPosition(10, 20)
 
 	rect := &Rectangle{
-		Entity: Entity{ID: 2, Name: "Blue Rectangle"},
+		Entity: Entity{ID: 2, Name: "Blue Rectangle", Version: 1},
 		Width:  4.0,
 		Height: 6.0,
 	}
 	rect.SetPosition(5, 15)
 
 	triangle := &Triangle{
-		Entity: Entity{ID: 3, Name: "Green Triangle"},
+		Entity: Entity{ID: 3, Name: "Green Triangle", Version: 1},
 		Base:   3.0,
 		Height: 4.0,
 	}
@@ -293,20 +318,22 @@ func main() {
 		fmt.Printf("%s - Area: %.2f, Perimeter: %.2f\n", s.String(), s.Area(), s.Perimeter())
 	}
 
-	// Create container
+	// Create container with capacity
 	container := &Container{
-		Entity: Entity{ID: 100, Name: "Main Container"},
+		Entity:   Entity{ID: 100, Name: "Main Container", Version: 1},
+		Capacity: 10,
 	}
 	container.AddShape(circle)
 	container.AddShape(rect)
 	container.AddShape(triangle)
-	fmt.Printf("\nTotal area in container: %.2f\n\n", container.TotalArea())
-	container.ListShapes()
+	fmt.Printf("\nTotal area in container: %.2f\n", container.TotalArea())
+	fmt.Printf("Container has %d shapes\n", container.Count())
 
 	// Create points
 	p1 := &Point{X: 0, Y: 0}
 	p2 := &Point{X: 3, Y: 4}
-	fmt.Printf("\n%s to %s distance: %.2f\n", p1.String(), p2.String(), p1.Distance(p2))
+	fmt.Printf("\nEuclidean distance: %.2f\n", p1.Distance(p2))
+	fmt.Printf("Manhattan distance: %d\n", p1.ManhattanDistance(p2))
 
 	// Create person and account
 	person := &Person{
@@ -314,6 +341,7 @@ func main() {
 		LastName:  "Doe",
 	}
 	person.SetAge(30)
+	fmt.Printf("\nPerson: %s, Age: %d, Has email: %v\n", person.FullName(), person.GetAge(), person.HasEmail())
 
 	account := &Account{
 		Person:     *person,
@@ -322,4 +350,11 @@ func main() {
 	account.Deposit(1000.50)
 	account.Deposit(250.00)
 	fmt.Printf("\n%s\n", account.String())
-}
+	fmt.Printf("Can withdraw $500: %v\n", account.CanWithdraw(500.00))
+
+	// Test new public methods
+	fmt.Printf("\nCircle version: %d\n", circle.GetVersion())
+	circle.Scale(2.0)
+	fmt.Printf("Circle after scaling: Radius=%.2f, Area=%.2f\n", circle.Radius, circle.Area())
+	fmt.Printf("Rectangle diagonal: %.2f\n", rect.Diagonal())
+	fmt.Printf("Triangle is valid: %v\n", triangle.IsValid())
