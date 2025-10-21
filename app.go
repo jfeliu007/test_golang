@@ -12,6 +12,12 @@ type Shape interface {
 	String() string
 }
 
+// NEW: Interface for objects that can be serialized
+type Serializable interface {
+	ToJSON() string
+	GetID() string
+}
+
 // Base struct for composition
 type Entity struct {
 	ID   int
@@ -135,7 +141,7 @@ func (t *Triangle) isValid() bool {
 		t.side2+t.side3 > t.side1
 }
 
-// Point doesn't implement Shape interface
+// Point doesn't implement Shape interface - MODIFIED: now implements Serializable
 type Point struct {
 	X int
 	Y int
@@ -151,6 +157,16 @@ func (p *Point) Distance(other *Point) float64 {
 // Public method
 func (p *Point) String() string {
 	return fmt.Sprintf("Point(%d, %d)", p.X, p.Y)
+}
+
+// NEW: Public method - implements Serializable interface
+func (p *Point) ToJSON() string {
+	return fmt.Sprintf(`{"x": %d, "y": %d}`, p.X, p.Y)
+}
+
+// NEW: Public method - implements Serializable interface
+func (p *Point) GetID() string {
+	return fmt.Sprintf("point_%d_%d", p.X, p.Y)
 }
 
 // private method
@@ -191,7 +207,7 @@ func (c *Container) count() int {
 	return len(c.shapes)
 }
 
-// Person doesn't use composition
+// Person doesn't use composition - MODIFIED: now implements Serializable
 type Person struct {
 	FirstName string
 	LastName  string
@@ -221,15 +237,26 @@ func (p *Person) String() string {
 	return fmt.Sprintf("Person(%s, Age: %d)", p.FullName(), p.age)
 }
 
+// NEW: Public method - implements Serializable interface
+func (p *Person) ToJSON() string {
+	return fmt.Sprintf(`{"firstName": "%s", "lastName": "%s", "age": %d}`, p.FirstName, p.LastName, p.age)
+}
+
+// NEW: Public method - implements Serializable interface
+func (p *Person) GetID() string {
+	return fmt.Sprintf("person_%s_%s", p.FirstName, p.LastName)
+}
+
 // private method
 func (p *Person) hasEmail() bool {
 	return p.email != ""
 }
 
-// Account uses composition with Person
+// Account uses composition with Person - MODIFIED: added Status field
 type Account struct {
 	Person     // composition
 	AccountNum string
+	Status     string  // NEW public field
 	balance    float64 // private field
 }
 
@@ -245,9 +272,19 @@ func (a *Account) GetBalance() float64 {
 	return a.balance
 }
 
-// Public method
+// Public method - MODIFIED: includes Status
 func (a *Account) String() string {
-	return fmt.Sprintf("Account(%s, Num: %s, Balance: $%.2f)", a.FullName(), a.AccountNum, a.balance)
+	return fmt.Sprintf("Account(%s, Num: %s, Status: %s, Balance: $%.2f)", a.FullName(), a.AccountNum, a.Status, a.balance)
+}
+
+// NEW: Public method
+func (a *Account) Activate() {
+	a.Status = "Active"
+}
+
+// NEW: Public method
+func (a *Account) Suspend() {
+	a.Status = "Suspended"
 }
 
 // private method
@@ -261,6 +298,12 @@ func abs(x int) int {
 		return -x
 	}
 	return x
+}
+
+// NEW: Helper function to demonstrate Serializable interface
+func printSerializable(s Serializable) {
+	fmt.Printf("ID: %s\n", s.GetID())
+	fmt.Printf("JSON: %s\n\n", s.ToJSON())
 }
 
 // Example usage
@@ -308,6 +351,10 @@ func main() {
 	p2 := &Point{X: 3, Y: 4}
 	fmt.Printf("\n%s to %s distance: %.2f\n", p1.String(), p2.String(), p1.Distance(p2))
 
+	// NEW: Demonstrate Serializable interface with Point
+	fmt.Println("\n=== Serializable Objects ===")
+	printSerializable(p1)
+
 	// Create person and account
 	person := &Person{
 		FirstName: "John",
@@ -315,11 +362,16 @@ func main() {
 	}
 	person.SetAge(30)
 
+	// NEW: Demonstrate Serializable interface with Person
+	printSerializable(person)
+
 	account := &Account{
 		Person:     *person,
 		AccountNum: "ACC123456",
+		Status:     "Pending",
 	}
 	account.Deposit(1000.50)
 	account.Deposit(250.00)
-	fmt.Printf("\n%s\n", account.String())
+	account.Activate()
+	fmt.Printf("%s\n", account.String())
 }
