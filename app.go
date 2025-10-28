@@ -178,7 +178,7 @@ func (p *Point) manhattanDistance(other *Point) int {
 
 // Container uses composition and doesn't implement Shape
 type Container struct {
-	Entity   // composition
+	Entity       // composition
 	Capacity int // NEW public field
 	shapes   []Shape
 }
@@ -358,3 +358,4 @@ func main() {
 	fmt.Printf("Circle after scaling: Radius=%.2f, Area=%.2f\n", circle.Radius, circle.Area())
 	fmt.Printf("Rectangle diagonal: %.2f\n", rect.Diagonal())
 	fmt.Printf("Triangle is valid: %v\n", triangle.IsValid())
+}
