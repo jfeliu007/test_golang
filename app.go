@@ -12,6 +12,21 @@ type Shape interface {
 	String() string
 }
 
+// Common interface that some structs will implement
+type Shape2 interface {
+	Area() float64
+	Perimeter() float64
+	Stringe() string
+}
+
+// Base struct for composition
+type NewThing struct {
+	ID   int
+	Name string
+	x    float64 // private field
+	y    float64 // private field
+}
+
 // Base struct for composition
 type Entity struct {
 	ID   int
@@ -55,7 +70,7 @@ func (c *Circle) Perimeter() float64 {
 }
 
 // Public method - implements Shape interface
-func (c *Circle) String() string {
+func (c *Circle) Stringe() string {
 	return fmt.Sprintf("Circle(Name: %s, Radius: %.2f)", c.Name, c.Radius)
 }
 
@@ -66,9 +81,10 @@ func (c *Circle) scale(factor float64) {
 
 // Rectangle implements Shape interface
 type Rectangle struct {
-	Entity // composition
-	Width  float64
-	Height float64
+	Entity     // composition
+	Width      float64
+	Height     float64
+	AddedField float64
 }
 
 // Public method - implements Shape interface
@@ -158,39 +174,6 @@ func (p *Point) manhattanDistance(other *Point) int {
 	return abs(p.X-other.X) + abs(p.Y-other.Y)
 }
 
-// Container uses composition and doesn't implement Shape
-type Container struct {
-	Entity // composition
-	shapes []Shape
-}
-
-// Public method
-func (c *Container) AddShape(s Shape) {
-	c.shapes = append(c.shapes, s)
-}
-
-// Public method
-func (c *Container) TotalArea() float64 {
-	total := 0.0
-	for _, s := range c.shapes {
-		total += s.Area()
-	}
-	return total
-}
-
-// Public method
-func (c *Container) ListShapes() {
-	fmt.Println("Shapes in container:")
-	for i, s := range c.shapes {
-		fmt.Printf("%d. %s\n", i+1, s.String())
-	}
-}
-
-// private method
-func (c *Container) count() int {
-	return len(c.shapes)
-}
-
 // Person doesn't use composition
 type Person struct {
 	FirstName string
@@ -235,6 +218,13 @@ type Account struct {
 
 // Public method
 func (a *Account) Deposit(amount float64) {
+	if amount > 0 {
+		a.balance += amount
+	}
+}
+
+// Public method
+func (a *Account) DepositMore(amount float64) {
 	if amount > 0 {
 		a.balance += amount
 	}
@@ -287,21 +277,11 @@ func main() {
 	triangle.SetSides(3.0, 4.0, 5.0)
 
 	// Use Shape interface
-	shapes := []Shape{circle, rect, triangle}
+	shapes := []Shape{rect, triangle}
 	fmt.Println("Shapes:")
 	for _, s := range shapes {
 		fmt.Printf("%s - Area: %.2f, Perimeter: %.2f\n", s.String(), s.Area(), s.Perimeter())
 	}
-
-	// Create container
-	container := &Container{
-		Entity: Entity{ID: 100, Name: "Main Container"},
-	}
-	container.AddShape(circle)
-	container.AddShape(rect)
-	container.AddShape(triangle)
-	fmt.Printf("\nTotal area in container: %.2f\n\n", container.TotalArea())
-	container.ListShapes()
 
 	// Create points
 	p1 := &Point{X: 0, Y: 0}
