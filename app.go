@@ -224,6 +224,13 @@ func (a *Account) Deposit(amount float64) {
 }
 
 // Public method
+func (a *Account) DepositMore(amount float64) {
+	if amount > 0 {
+		a.balance += amount
+	}
+}
+
+// Public method
 func (a *Account) GetBalance() float64 {
 	return a.balance
 }
