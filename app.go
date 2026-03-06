@@ -12,6 +12,13 @@ type Shape interface {
 	String() string
 }
 
+// Common interface that some structs will implement
+type Shape2 interface {
+	Area() float64
+	Perimeter() float64
+	Stringe() string
+}
+
 // Base struct for composition
 type NewThing struct {
 	ID   int
@@ -63,7 +70,7 @@ func (c *Circle) Perimeter() float64 {
 }
 
 // Public method - implements Shape interface
-func (c *Circle) String() string {
+func (c *Circle) Stringe() string {
 	return fmt.Sprintf("Circle(Name: %s, Radius: %.2f)", c.Name, c.Radius)
 }
 
@@ -263,7 +270,7 @@ func main() {
 	triangle.SetSides(3.0, 4.0, 5.0)
 
 	// Use Shape interface
-	shapes := []Shape{circle, rect, triangle}
+	shapes := []Shape{rect, triangle}
 	fmt.Println("Shapes:")
 	for _, s := range shapes {
 		fmt.Printf("%s - Area: %.2f, Perimeter: %.2f\n", s.String(), s.Area(), s.Perimeter())
